@@ -2,6 +2,15 @@
 
 Ein Node.js TypeScript Client für die Viessmann API zur Steuerung und Überwachung von Viessmann Wärmepumpen.
 
+## Features
+
+✅ **Vollständiger OAuth2 Authorization Code Flow mit PKCE**
+✅ **Automatische Token-Verwaltung** (Speichern, Laden, Erneuern)
+✅ **Browser-basierte Authentifizierung** - kein manuelles Token-Handling
+✅ **Lokaler Callback-Server** für OAuth-Redirect
+✅ **TypeScript Support** mit vollständigen Type Definitions
+✅ **Einfache API** für alle Viessmann IoT Endpoints
+
 ## Installation
 
 Installieren Sie die erforderlichen Abhängigkeiten:
@@ -13,14 +22,52 @@ npm install
 ## Voraussetzungen
 
 - Node.js (v16 oder höher)
-- Ein Viessmann Developer Account mit Client ID und Client Secret
+- Ein Viessmann Developer Account mit Client ID
 - Viessmann Wärmepumpe mit IoT-Anbindung
 
 ## Viessmann Developer Account
 
 1. Registrieren Sie sich unter https://developer.viessmann.com/
 2. Erstellen Sie eine neue Applikation
-3. Notieren Sie sich Client ID und Client Secret
+3. Konfigurieren Sie die Redirect URI: `http://localhost:4200/`
+4. Notieren Sie sich die Client ID
+
+## Schnellstart
+
+### Einfache Authentifizierung mit Browser
+
+Die einfachste Methode - der Browser öffnet sich automatisch für den Login:
+
+```typescript
+import { ViessmannClient } from './src/client';
+
+const client = new ViessmannClient({
+  clientId: 'YOUR_CLIENT_ID'
+});
+
+// Browser öffnet sich automatisch, Token wird gespeichert
+await client.authenticateWithBrowser();
+
+// Jetzt können Sie die API verwenden
+const installations = await client.getInstallations();
+console.log(installations);
+```
+
+**Beispiel ausführen:**
+```bash
+npm run auth
+```
+
+Beim ersten Aufruf:
+1. 🌐 Browser öffnet sich automatisch
+2. 🔐 Sie loggen sich mit Ihren Viessmann-Credentials ein
+3. ✅ Token wird automatisch gespeichert in `.viessmann-token.json`
+4. 📡 API-Aufrufe funktionieren sofort
+
+Bei weiteren Aufrufen:
+- ✅ Verwendet automatisch den gespeicherten Token
+- ✅ Kein erneuter Login nötig
+- 🔄 Token wird automatisch erneuert wenn abgelaufen
 
 ## Verwendung
 
@@ -29,19 +76,36 @@ npm install
 ```typescript
 import { ViessmannClient } from './src/client';
 
+// Nur Client ID erforderlich für OAuth2 Flow
+const client = new ViessmannClient({
+  clientId: 'YOUR_CLIENT_ID'
+});
+
+// ODER: Mit vorhandenem Access Token
 const client = new ViessmannClient({
   clientId: 'YOUR_CLIENT_ID',
-  clientSecret: 'YOUR_CLIENT_SECRET',
-  username: 'YOUR_VIESSMANN_USERNAME',
-  password: 'YOUR_VIESSMANN_PASSWORD'
+  accessToken: 'YOUR_ACCESS_TOKEN',
+  refreshToken: 'YOUR_REFRESH_TOKEN' // Optional
 });
 ```
 
 ### Authentifizierung
 
+#### Option 1: Browser-basiert (Empfohlen)
+
 ```typescript
-// Authentifizierung durchführen
-await client.authenticate();
+// Vollautomatisch - Browser öffnet sich, Token wird gespeichert
+await client.authenticateWithBrowser();
+```
+
+#### Option 2: Mit vorhandenem Token
+
+```typescript
+// Token direkt im Constructor übergeben
+const client = new ViessmannClient({
+  clientId: 'YOUR_CLIENT_ID',
+  accessToken: 'YOUR_ACCESS_TOKEN'
+});
 ```
 
 ### Installationen abrufen
@@ -107,46 +171,50 @@ await client.executeCommand(
 );
 ```
 
-## Beispiel
+## Vollständiges Beispiel
 
 ```typescript
 import { ViessmannClient } from './src/client';
 
 async function main() {
   const client = new ViessmannClient({
-    clientId: process.env.VIESSMANN_CLIENT_ID!,
-    clientSecret: process.env.VIESSMANN_CLIENT_SECRET!,
-    username: process.env.VIESSMANN_USERNAME!,
-    password: process.env.VIESSMANN_PASSWORD!
+    clientId: 'YOUR_CLIENT_ID'
   });
 
   try {
-    // Authentifizieren
-    await client.authenticate();
+    // Authentifizieren (Browser öffnet sich beim ersten Mal)
+    await client.authenticateWithBrowser();
 
     // Installationen abrufen
     const installations = await client.getInstallations();
     const installation = installations[0];
     
-    const gateway = installation.gateways[0];
-    const device = gateway.devices[0];
+    console.log(`Installation: ${installation.description}`);
+    console.log(`Adresse: ${installation.address.city}`);
 
-    // Aktuelle Temperatur abrufen
-    const temp = await client.getHeatingTemperature(
-      installation.id,
-      gateway.serial,
-      device.id
-    );
-    console.log(`Aktuelle Temperatur: ${temp}°C`);
+    // Features abrufen (falls Gateways vorhanden)
+    if (installation.gateways?.[0]?.devices?.[0]) {
+      const gateway = installation.gateways[0];
+      const device = gateway.devices[0];
 
-    // Temperatur ändern
-    await client.setHeatingTemperature(
-      installation.id,
-      gateway.serial,
-      device.id,
-      22.0
-    );
-    console.log('Temperatur auf 22°C gesetzt');
+      const features = await client.getFeatures(
+        installation.id,
+        gateway.serial,
+        device.id
+      );
+
+      console.log(`${features.length} Features gefunden`);
+
+      // Heizungs-Features anzeigen
+      const heatingFeatures = features.filter(f => 
+        f.feature.includes('heating') && f.properties.value
+      );
+
+      heatingFeatures.forEach(feature => {
+        const value = feature.properties.value;
+        console.log(`${feature.feature}: ${value?.value}${value?.unit || ''}`);
+      });
+    }
   } catch (error) {
     console.error('Fehler:', error);
   }
@@ -155,13 +223,51 @@ async function main() {
 main();
 ```
 
-## Build
+## Build & Scripts
 
 ```bash
+# TypeScript kompilieren
 npm run build
+
+# Test ausführen (mit vorhandenem Token)
+npm test
+
+# OAuth2 Authentifizierung mit Browser
+npm run auth
+
+# Watch-Modus für Entwicklung
+npm run watch
 ```
 
-Die kompilierten Dateien befinden sich im `dist/` Verzeichnis.
+## Token-Verwaltung
+
+### Automatische Token-Speicherung
+
+Tokens werden automatisch in `.viessmann-token.json` gespeichert:
+
+```typescript
+await client.authenticateWithBrowser(); // Token wird automatisch gespeichert
+```
+
+### Manuelles Token-Management
+
+```typescript
+import { TokenStorage } from './src/storage';
+
+const storage = new TokenStorage();
+
+// Token speichern
+await storage.saveToken(token);
+
+// Token laden
+const token = await storage.loadToken();
+
+// Token löschen
+await storage.deleteToken();
+
+// Prüfen ob Token abgelaufen ist
+const isExpired = storage.isTokenExpired(token);
+```
 
 ## API Referenz
 
@@ -174,29 +280,100 @@ new ViessmannClient(config: ViessmannConfig)
 ```
 
 **ViessmannConfig:**
-- `clientId`: Client ID aus dem Viessmann Developer Portal
-- `clientSecret`: Client Secret aus dem Viessmann Developer Portal
-- `username`: Ihr Viessmann Benutzername
-- `password`: Ihr Viessmann Passwort
+- `clientId` (required): Client ID aus dem Viessmann Developer Portal
+- `clientSecret` (optional): Client Secret (nur für Password Grant)
+- `username` (optional): Viessmann Benutzername (nur für Password Grant)
+- `password` (optional): Viessmann Passwort (nur für Password Grant)
+- `accessToken` (optional): Vorhandener Access Token
+- `refreshToken` (optional): Vorhandener Refresh Token
 - `apiUrl` (optional): API Basis-URL (Standard: https://api.viessmann.com)
 
 #### Methoden
 
-- `authenticate()`: Authentifizierung mit OAuth2
+**Authentifizierung:**
+- `authenticateWithBrowser()`: OAuth2 Flow mit Browser (empfohlen)
+- `authenticate()`: OAuth2 Password Grant (deprecated)
 - `refreshToken()`: Aktualisiert den Access Token
+
+**Installationen:**
 - `getInstallations()`: Ruft alle Installationen ab
 - `getInstallation(installationId)`: Ruft eine spezifische Installation ab
+
+**Features:**
 - `getFeatures(installationId, gatewaySerial, deviceId)`: Ruft alle Features ab
 - `getFeature(installationId, gatewaySerial, deviceId, featureName)`: Ruft ein spezifisches Feature ab
+
+**Befehle:**
 - `executeCommand(installationId, gatewaySerial, deviceId, featureName, command, data?)`: Führt einen Befehl aus
+
+**Convenience-Methoden:**
 - `getHeatingTemperature(installationId, gatewaySerial, deviceId)`: Ruft aktuelle Heiztemperatur ab
 - `setHeatingTemperature(installationId, gatewaySerial, deviceId, temperature)`: Setzt die Heiztemperatur
 
+### TokenStorage
+
+```typescript
+const storage = new TokenStorage(tokenPath?: string);
+
+await storage.saveToken(token: AuthToken): Promise<void>
+await storage.loadToken(): Promise<StoredToken | null>
+await storage.hasToken(): Promise<boolean>
+await storage.deleteToken(): Promise<void>
+storage.isTokenExpired(token: StoredToken): boolean
+```
+
+## Projektstruktur
+
+```
+viessmann-api/
+├── src/
+│   ├── client.ts      # Haupt-API-Client
+│   ├── oauth.ts       # OAuth2 Helper (PKCE, Callback-Server)
+│   ├── storage.ts     # Token-Speicherung
+│   ├── types.ts       # TypeScript Interfaces
+│   └── index.ts       # Module Exports
+├── auth-example.ts    # Beispiel für OAuth2 Authentifizierung
+├── test.ts           # Test-Script
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
 ## Sicherheitshinweise
 
-- Speichern Sie Ihre Zugangsdaten niemals im Code
-- Verwenden Sie Umgebungsvariablen für sensitive Daten
-- Erstellen Sie eine `.env` Datei für lokale Entwicklung (nicht in Git committen)
+- ✅ `.viessmann-token.json` ist in `.gitignore` und wird nicht committed
+- ✅ `.env` Datei ist in `.gitignore` und wird nicht committed
+- ✅ Verwenden Sie NIEMALS Ihre Credentials direkt im Code
+- ✅ Verwenden Sie Umgebungsvariablen für sensitive Daten
+- ✅ Der OAuth2 Flow mit PKCE ist sicherer als Password Grant
+
+## Fehlerbehebung
+
+### Browser öffnet sich nicht automatisch
+
+Falls der Browser nicht automatisch öffnet, kopieren Sie die angezeigte URL und öffnen Sie sie manuell:
+
+```
+🌐 Opening browser for authentication...
+   If the browser doesn't open, visit this URL:
+   https://iam.viessmann.com/idp/v3/authorize?client_id=...
+```
+
+### Token abgelaufen
+
+Tokens werden automatisch erneuert. Falls ein Fehler auftritt:
+
+```bash
+# Token-Datei löschen und neu authentifizieren
+rm .viessmann-token.json
+npm run auth
+```
+
+### Port 4200 bereits belegt
+
+Der OAuth-Callback läuft auf Port 4200. Falls dieser Port belegt ist, müssen Sie:
+1. Den Port im Code ändern (`src/client.ts`: `private redirectUri`)
+2. Die Redirect URI im Viessmann Developer Portal anpassen
 
 ## Lizenz
 
@@ -205,3 +382,9 @@ MIT
 ## Hinweise
 
 Dieses Projekt ist ein inoffizieller Client und steht in keiner Verbindung zu Viessmann. Die Nutzung erfolgt auf eigene Verantwortung.
+
+## Links
+
+- Viessmann Developer Portal: https://developer.viessmann.com/
+- API Dokumentation: https://api.viessmann-climatesolutions.com/documentation
+- GitHub Repository: https://github.com/ttr-75/viessmann-api

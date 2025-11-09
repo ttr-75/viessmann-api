@@ -1,8 +1,10 @@
 export interface ViessmannConfig {
   clientId: string;
-  clientSecret: string;
-  username: string;
-  password: string;
+  clientSecret?: string;
+  username?: string;
+  password?: string;
+  accessToken?: string;
+  refreshToken?: string;
   apiUrl?: string;
 }
 

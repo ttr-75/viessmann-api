@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ts-node test.ts",
+    "auth": "ts-node auth-example.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -19,11 +20,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "open": "^10.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0"
-  },
-  "dependencies": {
-    "axios": "^1.6.2"
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.2"
   }
 }
