@@ -254,71 +254,249 @@ export class ViessmannClient {
   /**
    * Get all installations for the authenticated user
    */
-  async getInstallations(): Promise<Installation[]> {
+  async getInstallations(includeGateways = false): Promise<any> {
     await this.ensureAuthenticated();
-    const response = await this.axiosInstance.get('/iot/v1/equipment/installations');
-    return response.data.data;
+    const params = includeGateways ? { includeGateways: 'true' } : {};
+    const response = await this.axiosInstance.get('/iot/v2/equipment/installations', { params });
+    return response.data;
   }
 
   /**
    * Get specific installation by ID
    */
-  async getInstallation(installationId: number): Promise<Installation> {
+  async getInstallation(installationId: number, includeGateways = true): Promise<any> {
     await this.ensureAuthenticated();
+    const params = includeGateways ? { includeGateways: 'true' } : {};
     const response = await this.axiosInstance.get(
-      `/iot/v1/equipment/installations/${installationId}`
+      `/iot/v2/equipment/installations/${installationId}`,
+      { params }
     );
-    return response.data.data;
+    return response.data;
   }
 
   /**
-   * Get all features for a device
+   * Get gateways for an installation
    */
-  async getFeatures(
+  async getGateways(installationId: number, includeDevices = true): Promise<any> {
+    await this.ensureAuthenticated();
+    const params = includeDevices ? { includeDevices: 'true' } : {};
+    const response = await this.axiosInstance.get(
+      `/iot/v2/equipment/installations/${installationId}/gateways`,
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get specific gateway
+   */
+  async getGateway(installationId: number, gatewaySerial: string): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get devices for a gateway
+   */
+  async getDevices(installationId: number, gatewaySerial: string): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get gateway status
+   */
+  async getGatewayStatus(installationId: number, gatewaySerial: string): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}/status`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get installation status
+   */
+  async getInstallationStatus(installationId: number): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/equipment/installations/${installationId}/status`
+    );
+    return response.data;
+  }
+
+  // ============================================
+  // FEATURES API - IoT Data & Control
+  // ============================================
+
+  /**
+   * Get all features for installation (all devices combined)
+   */
+  async getInstallationFeatures(
+    installationId: number,
+    options?: {
+      regex?: string;
+      filter?: string[];
+      skipDisabled?: boolean;
+    }
+  ): Promise<any> {
+    await this.ensureAuthenticated();
+    const params: any = {};
+    if (options?.regex) params.regex = options.regex;
+    if (options?.filter) params.filter = options.filter;
+    if (options?.skipDisabled) params.skipDisabled = 'true';
+    
+    const response = await this.axiosInstance.get(
+      `/iot/v2/features/installations/${installationId}/features`,
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get specific feature from installation
+   */
+  async getInstallationFeature(
+    installationId: number,
+    featureName: string
+  ): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/features/installations/${installationId}/features/${featureName}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get all features for a gateway (includes all devices on gateway)
+   */
+  async getGatewayFeatures(
     installationId: number,
     gatewaySerial: string,
-    deviceId: string
-  ): Promise<Feature[]> {
+    options?: {
+      regex?: string;
+      filter?: string[];
+      skipDisabled?: boolean;
+      includeDevicesFeatures?: boolean;
+    }
+  ): Promise<any> {
     await this.ensureAuthenticated();
+    const params: any = {};
+    if (options?.regex) params.regex = options.regex;
+    if (options?.filter) params.filter = options.filter;
+    if (options?.skipDisabled) params.skipDisabled = 'true';
+    if (options?.includeDevicesFeatures) params.includeDevicesFeatures = 'true';
+    
     const response = await this.axiosInstance.get(
-      `/iot/v1/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features`
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/features`,
+      { params }
     );
-    return response.data.data;
+    return response.data;
   }
 
   /**
-   * Get a specific feature
+   * Get specific feature from gateway
    */
-  async getFeature(
+  async getGatewayFeature(
+    installationId: number,
+    gatewaySerial: string,
+    featureName: string
+  ): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.get(
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/features/${featureName}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Execute command on gateway feature
+   */
+  async executeGatewayFeatureCommand(
+    installationId: number,
+    gatewaySerial: string,
+    featureName: string,
+    commandName: string,
+    data?: any
+  ): Promise<any> {
+    await this.ensureAuthenticated();
+    const response = await this.axiosInstance.post(
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/features/${featureName}/commands/${commandName}`,
+      data || {}
+    );
+    return response.data;
+  }
+
+  /**
+   * Get all features for a specific device
+   */
+  async getDeviceFeatures(
+    installationId: number,
+    gatewaySerial: string,
+    deviceId: string,
+    options?: {
+      regex?: string;
+      filter?: string[];
+      skipDisabled?: boolean;
+    }
+  ): Promise<any> {
+    await this.ensureAuthenticated();
+    const params: any = {};
+    if (options?.regex) params.regex = options.regex;
+    if (options?.filter) params.filter = options.filter;
+    if (options?.skipDisabled) params.skipDisabled = 'true';
+    
+    const response = await this.axiosInstance.get(
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features`,
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get specific feature from device
+   */
+  async getDeviceFeature(
     installationId: number,
     gatewaySerial: string,
     deviceId: string,
     featureName: string
-  ): Promise<Feature> {
+  ): Promise<any> {
     await this.ensureAuthenticated();
     const response = await this.axiosInstance.get(
-      `/iot/v1/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features/${featureName}`
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features/${featureName}`
     );
-    return response.data.data;
+    return response.data;
   }
 
   /**
-   * Execute a command on a feature
+   * Execute command on device feature
    */
-  async executeCommand(
+  async executeDeviceFeatureCommand(
     installationId: number,
     gatewaySerial: string,
     deviceId: string,
     featureName: string,
-    command: string,
+    commandName: string,
     data?: any
-  ): Promise<void> {
+  ): Promise<any> {
     await this.ensureAuthenticated();
-    await this.axiosInstance.post(
-      `/iot/v1/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features/${featureName}/commands/${command}`,
-      data
+    const response = await this.axiosInstance.post(
+      `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features/${featureName}/commands/${commandName}`,
+      data || {}
     );
+    return response.data;
   }
+
+  // ============================================
+  // CONVENIENCE METHODS - Common Operations
+  // ============================================
 
   /**
    * Get current heating temperature
@@ -328,13 +506,13 @@ export class ViessmannClient {
     gatewaySerial: string,
     deviceId: string
   ): Promise<number> {
-    const feature = await this.getFeature(
+    const feature = await this.getDeviceFeature(
       installationId,
       gatewaySerial,
       deviceId,
       'heating.circuits.0.operating.programs.active'
     );
-    return feature.properties.value?.value;
+    return feature.data?.properties?.value?.value;
   }
 
   /**
@@ -346,7 +524,7 @@ export class ViessmannClient {
     deviceId: string,
     temperature: number
   ): Promise<void> {
-    await this.executeCommand(
+    await this.executeDeviceFeatureCommand(
       installationId,
       gatewaySerial,
       deviceId,

@@ -9,6 +9,10 @@
     "watch": "tsc --watch",
     "test": "ts-node test.ts",
     "auth": "ts-node auth-example.ts",
+    "explore": "ts-node explore.ts",
+    "explore-v2": "ts-node explore-v2.ts",
+    "features": "ts-node test-features.ts",
+    "read": "ts-node read-heatpump.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

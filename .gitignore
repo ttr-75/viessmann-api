@@ -1,7 +1,35 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-*.log
+
+# Environment variables
 .env
-.DS_Store
-*.tsbuildinfo
+
+# Token storage
 .viessmann-token.json
+
+# API Response data (contains sensitive installation/device info)
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
