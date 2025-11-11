@@ -1,13 +1,26 @@
-import { ViessmannClient } from './src/client';
-import axios from 'axios';
+import { ViessmannClient } from "./src/client";
+import axios from "axios";
+import * as dotenv from "dotenv";
+import * as path from "path";
 
 /**
  * Test verschiedene API v2 Endpoints um die Struktur zu verstehen
  */
 
 async function discoverApiStructure() {
+	// Client initialisieren (nur Client ID erforderlich)
+	dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+	const clientId = process.env.VIESSMANN_CLIENT_ID;
+	if (!clientId) {
+		console.error(
+			"Missing CLIENT_ID in .env (set VIESSMANN_CLIENT_ID or CLIENT_ID).",
+		);
+		process.exit(1);
+	}
+
   const client = new ViessmannClient({
-    clientId: '3287723561d629d3448f7b41958b7da3'
+		clientId: clientId,
   });
 
   try {

@@ -1,4 +1,6 @@
-import { ViessmannClient } from './src/client';
+import { ViessmannClient } from "./src/client";
+import * as dotenv from "dotenv";
+import * as path from "path";
 
 /**
  * Erkunde deine Viessmann Installation
@@ -6,8 +8,18 @@ import { ViessmannClient } from './src/client';
  */
 
 async function exploreInstallation() {
+	dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+	const clientId = process.env.VIESSMANN_CLIENT_ID;
+	if (!clientId) {
+		console.error(
+			"Missing CLIENT_ID in .env (set VIESSMANN_CLIENT_ID or CLIENT_ID).",
+		);
+		process.exit(1);
+	}
+
   const client = new ViessmannClient({
-    clientId: '3287723561d629d3448f7b41958b7da3'
+		clientId: clientId,
   });
 
   try {
