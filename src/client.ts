@@ -100,7 +100,7 @@ export class ViessmannClient {
 
     // Exchange code for token
     await this.exchangeCodeForToken(code, pkce.codeVerifier);
-    
+
     // Save token
     if (this.token) {
       await this.tokenStorage.saveToken(this.token);
@@ -122,7 +122,7 @@ export class ViessmannClient {
       };
 
       const response = await axios.post(
-        'https://iam.viessmann.com/idp/v3/token',
+        'https://iam.viessmann-climatesolutions.com/idp/v3/token',
         new URLSearchParams(params),
         {
           headers: {
@@ -159,7 +159,7 @@ export class ViessmannClient {
       };
 
       const response = await axios.post(
-        'https://iam.viessmann.com/idp/v3/token',
+        'https://iam.viessmann-climatesolutions.com/idp/v3/token',
         new URLSearchParams(params),
         {
           headers: {
@@ -200,7 +200,7 @@ export class ViessmannClient {
       };
 
       const response = await axios.post(
-        'https://iam.viessmann.com/idp/v3/token',
+        'https://iam.viessmann-climatesolutions.com/idp/v3/token',
         new URLSearchParams(params),
         {
           headers: {
@@ -212,7 +212,7 @@ export class ViessmannClient {
       this.token = response.data;
       this.tokenExpiry = new Date(Date.now() + this.token!.expires_in * 1000);
       this.updateAuthHeader();
-      
+
       // Save refreshed token
       if (this.token) {
         await this.tokenStorage.saveToken(this.token);
@@ -246,7 +246,7 @@ export class ViessmannClient {
    */
   private updateAuthHeader(): void {
     if (this.token) {
-      this.axiosInstance.defaults.headers.common['Authorization'] = 
+      this.axiosInstance.defaults.headers.common['Authorization'] =
         `Bearer ${this.token.access_token}`;
     }
   }
@@ -351,7 +351,7 @@ export class ViessmannClient {
     if (options?.regex) params.regex = options.regex;
     if (options?.filter) params.filter = options.filter;
     if (options?.skipDisabled) params.skipDisabled = 'true';
-    
+
     const response = await this.axiosInstance.get(
       `/iot/v2/features/installations/${installationId}/features`,
       { params }
@@ -392,7 +392,7 @@ export class ViessmannClient {
     if (options?.filter) params.filter = options.filter;
     if (options?.skipDisabled) params.skipDisabled = 'true';
     if (options?.includeDevicesFeatures) params.includeDevicesFeatures = 'true';
-    
+
     const response = await this.axiosInstance.get(
       `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/features`,
       { params }
@@ -451,7 +451,7 @@ export class ViessmannClient {
     if (options?.regex) params.regex = options.regex;
     if (options?.filter) params.filter = options.filter;
     if (options?.skipDisabled) params.skipDisabled = 'true';
-    
+
     const response = await this.axiosInstance.get(
       `/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features`,
       { params }
