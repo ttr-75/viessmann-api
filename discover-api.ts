@@ -41,7 +41,7 @@ async function discoverApiStructure() {
       console.log(`\n📡 Teste: ${endpoint}`);
       try {
         const response = await axios.get(
-          `https://api.viessmann.com${endpoint}`,
+          `https://api.viessmann-climatesolutions.com${endpoint}`,
           {
             headers: {
               'Authorization': `Bearer ${(client as any).token.access_token}`,
@@ -51,7 +51,7 @@ async function discoverApiStructure() {
         );
         console.log('✅ Erfolg!');
         console.log(JSON.stringify(response.data, null, 2));
-        
+
         // Speichere Antwort
         const fs = require('fs');
         const filename = `api-response-${endpoint.replace(/\//g, '-')}.json`;
