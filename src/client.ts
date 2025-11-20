@@ -15,7 +15,7 @@ export class ViessmannClient {
   constructor(config: ViessmannConfig) {
     this.config = {
       ...config,
-      apiUrl: config.apiUrl || 'https://api.viessmann.com'
+      apiUrl: config.apiUrl || 'https://api.viessmann-climatesolutions.com'
     };
 
     this.axiosInstance = axios.create({
