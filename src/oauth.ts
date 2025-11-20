@@ -51,14 +51,14 @@ export function buildAuthorizationURL(
   params: AuthorizationURLParams,
   codeChallenge: string
 ): string {
-  const url = new URL('https://iam.viessmann.com/idp/v3/authorize');
+  const url = new URL('https://iam.viessmann-climatesolutions.com/idp/v3/authorize');
   url.searchParams.set('client_id', params.clientId);
   url.searchParams.set('redirect_uri', params.redirectUri);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', params.scope);
   url.searchParams.set('code_challenge', codeChallenge);
   url.searchParams.set('code_challenge_method', 'S256');
-  
+
   if (params.state) {
     url.searchParams.set('state', params.state);
   }
@@ -76,7 +76,7 @@ export function startCallbackServer(
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url!, `http://localhost:${port}`);
-      
+
       // Check if this is the callback
       if (url.pathname === '/') {
         const code = url.searchParams.get('code');
